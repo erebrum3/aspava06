@@ -69,7 +69,7 @@ export default function Footer({ lang, dict }: FooterProps) {
             {/* Business Info */}
             <div className="mt-6 pt-6 border-t border-neutral-800 space-y-2 text-xs">
               <p className="text-neutral-400">
-                <span className="text-neutral-300">KVK:</span> 12345678
+                <span className="text-neutral-300">KVK:</span> 95744282
               </p>
               <p className="text-neutral-400">
                 <span className="text-neutral-300">BTW:</span> NL001234567B01
