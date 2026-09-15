@@ -1,0 +1,25 @@
+{
+  "source_size": {"width": 941, "height": 1672},
+  "coordinate_origin": "top-left",
+  "status": "FIRST_PASS_MANUAL_IMAGE_SPACE_CALIBRATION",
+  "note": "Approximate where trees/occlusion hide facade or parcel edges. Use these as camera-match targets and refine by overlay; do not treat hidden boundaries as surveyed geometry.",
+  "aoi": {"xL": 45, "yT": 905, "xR": 435, "yB": 1072},
+  "segments": [
+    {"id": "LT01", "xL": 52, "xR": 102, "roof_peak": [79, 925], "base_y": 1062},
+    {"id": "LT02", "xL": 102, "xR": 151, "roof_peak": [126, 922], "base_y": 1062},
+    {"id": "LT03", "xL": 151, "xR": 201, "roof_peak": [176, 922], "base_y": 1062},
+    {"id": "LT04", "xL": 201, "xR": 250, "roof_peak": [226, 920], "base_y": 1062},
+    {"id": "LT05", "xL": 250, "xR": 312, "roof_peak": [280, 919], "base_y": 1062},
+    {"id": "PLOT01", "xL": 312, "xR": 398, "roof_peak": [354, 946], "base_y": 1062},
+    {"id": "RN01", "xL": 398, "xR": 429, "roof_peak": [414, 963], "base_y": 1062}
+  ],
+  "street": {
+    "target_row_baseline": [[48, 1061], [425, 1061]],
+    "approx_open_area": [[290, 1065], [650, 1065], [645, 1165], [250, 1165]]
+  },
+  "id_policy": {
+    "LT": "left terrace unit",
+    "PLOT01": "Aspava plot slot",
+    "RN01": "right neighbour"
+  }
+}
