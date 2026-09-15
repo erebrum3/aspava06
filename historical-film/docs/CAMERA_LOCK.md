@@ -1,132 +1,88 @@
 # Blender Camera-Lock Workflow
 
-> **CANONICAL CAMERA ALREADY EXISTS — do not re-solve.** (added 2026-09-15)
+> **CANONICAL CAMERA ALREADY EXISTS — do not re-solve.**
+>
 > Source of truth: `erebrum-system/sites/aspava/video-tests/2026-07-24/master-85m-78deg/geometri-gercegi/kamera-KANONIK.json`
-> (from the `.esp` export; ground truth §7 rule "Kamerayı yeniden fit etme").
-> RD/EPSG:28992 `87444.969, 436872.101` · altitude **85 m** · heading **282°** · tilt **78°** · vertical FOV **35°** · roll 0 · **941×1672** · horizon y=272.4.
-> Projection check 2026-09-15 with `render_geo.Cam`: church spire top 1 px, ASPAVA roof 5.8 px.
-> Build `Camera_Master` from these values. The overlay procedure below is a **validation** step (check proxies against the master), not a solve. The "50–85 mm, start near 65 mm" range below is superseded.
+>
+> Canonical values: RD/EPSG:28992 `87444.969, 436872.101` · altitude **85 m** · heading **282°** · tilt **78°** · vertical FOV **35°** · roll **0°** · render **941×1672** · horizon y≈272.4.
+>
+> The 2026-09-15 projection check recorded approximately **1 px** error at the church-spire top and **5.8 px** at the ASPAVA roof. Treat overlay as validation, not as permission to re-fit the camera.
 
+## Source-of-truth split
 
-## Goal
-Match the reference frame closely enough that all later historical versions inherit the same spatial structure.
+- `erebrum-system` owns the canonical geographic camera and city geometry.
+- `aspava06/historical-film` owns film-specific masks, image-space calibration, plot-slot rules, era briefs and render/edit workflow.
+- Do not create a second competing canonical camera inside `aspava06`.
 
-This is an image-space match, not a claim of exact photogrammetric recovery from one image.
+## What is locked
 
-## Camera Object
-Create one camera named:
+The canonical camera is immutable for the aerial/master geometry chain:
+- geographic position
+- altitude
+- heading
+- tilt
+- roll
+- vertical FOV
+- render resolution / framing
 
-`Camera_Master`
+Do not keyframe, re-fit or visually nudge these values to repair a local building mismatch. A local mismatch is corrected in local geometry or in the image-space calibration layer.
 
-Once solved, lock:
-- location
-- rotation
-- focal length
-- framing
+## Validation targets
 
-Do not keyframe or modify this camera in era files.
+Current image-space targets for the target row are:
+- `LT01..LT05`
+- `PLOT01`
+- `RN01`
+- row ground-contact line: **y=1082** in the 941×1672 master
+- `PLOT01` approximate visible bounds: **x=312..398**
+- `RN01` approximate visible bounds: **x=398..429**
+- warm-light match-cut anchor: **(362, 1062)**
 
-## Initial Setup
-1. Set render aspect ratio to the reference frame.
-2. Add the reference as camera background.
-3. Keep reference scale/crop fixed.
-4. Start with simple proxy geometry only.
+`y=1082` is the **row ground-contact / facade-groundline target**. It is not the warm-light anchor and should not be described as the light-window centre.
 
-## Suggested Starting Range
-Use only as a starting point, then match visually:
-- focal length: roughly 50–85 mm
-- start near 65 mm
-- camera pitched strongly downward
+## Validation order
 
-Final values are determined by overlay alignment, not by these estimates.
+1. Load/import the canonical camera from the geographic source pipeline.
+2. Confirm render resolution is exactly 941×1672.
+3. Render the neutral/proxy geometry without changing the camera.
+4. Compare against the master frame at approximately 50% opacity.
+5. Check global landmarks first (church, skyline / known georeferenced anchors).
+6. Check target-row roof rhythm.
+7. Check row ground-contact line at y=1082.
+8. Check `PLOT01` x=312..398 and `RN01` x=398..429.
+9. Check street/square boundary.
+10. If a local feature misses, modify local geometry or calibration — **never the canonical camera**.
 
-## Proxy Objects
-Create:
-- `BLOCK_FOREGROUND`
-- `BLOCK_TARGET_ROW`
-- `BLOCK_BACKGROUND`
+## Pixel QA thresholds
 
-Then replace `BLOCK_TARGET_ROW` with individual proxies:
-- `TR01`
-- `TR02`
-- `TR03`
-- `TR04`
-- `TR05_MODERN`
-- `TR06`
+Before architectural detailing:
+- global landmark check: use the existing canonical-camera projection tolerances
+- ordinary target-row boundaries: aim for ≤5 px
+- `PLOT01` and `RN01`: aim for ≤3 px where the source is not occluded
+- roof-peak y: aim for ≤5 px
 
-Use simple boxes and triangular roof prisms. Do not model windows, brickwork, or textures during camera solve.
+Where trees or occlusion hide an edge, record the target as approximate rather than forcing false precision.
 
-## Solve Order
-1. Correct roll.
-2. Match horizon / general vertical orientation.
-3. Match target-row baseline.
-4. Match target-row scale.
-5. Match roof-peak rhythm.
-6. Match TR05 parcel boundaries.
-7. Match TR06 position.
-8. Add square/street plane.
-9. Add tree-base markers as secondary anchors.
+## Local Blender scaffold
 
-## Street / Ground Objects
-Create:
-- `GROUND_SQUARE`
-- `STREET_AXIS`
-- optional curb-edge guide curves
+The scripts under `historical-film/blender/scripts/` may use a local image-space validation scaffold for quick single-view work. That scaffold is **not** the geographic camera source of truth. It exists only to:
+- visualize calibrated silhouettes
+- test masks
+- measure projected pixel error
+- prototype era-local replacements
 
-Use the visible street/square boundaries as perspective constraints.
+Do not export its local world coordinates as camera truth.
 
-## Tree Markers
-Use simple cylinders only:
-- `TREE_01`
-- `TREE_02`
-- etc.
+## Historical close-up scope
 
-Tree-base image positions are useful secondary anchors, but vegetation shape itself is not geometry-critical.
+The 1891–93 plot replacement and canal-fill masks belong to the **street-level close-up chain**, not to a claimed 1891 aerial reconstruction. In that close-up chain:
+- `PLOT01` = older modest house in 1891–93
+- from 1907 onward the later building mass may appear
+- camera/framing for each approved close-up master remains fixed through its era transitions
 
-## Overlay QA
-Render proxies with flat neutral materials and compare against the reference at approximately 50% opacity.
+## Era-layer separation
 
-Prioritize alignment of:
-- TR05 left edge
-- TR05 right edge
-- TR06 location
-- roof peaks
-- row baseline
-- square/street boundary
-- selected tree bases
-
-Do not chase facade details before these align.
-
-## Adjustment Rule
-After the camera is broadly solved:
-- if the entire row is wrong, adjust camera
-- if only one building is wrong, adjust that building
-- do not move the camera to fix a local geometry problem
-
-## File Stages
-Recommended Blender files:
-
-1. `SCHIEDAM_MASTER_CAMERA_v01.blend`
-   - camera
-   - proxies
-   - guides
-
-2. `SCHIEDAM_NEUTRAL_MASTER_v01.blend`
-   - refined but era-neutral geometry
-
-3. `SCHIEDAM_1891_93_v01.blend`
-   - TR05 historical replacement
-   - canal/fill layers
-
-## Historical Replacement Rule
-For 1891–93:
-- hide `TR05_MODERN`
-- create `TR05_1892`
-- keep it inside the same parcel slot
-- do not shift left/right boundaries
-
-## Separate Foreground Layers
-Create independent objects/collections for:
+Keep foreground historical action separate from building geometry:
 - `CANAL_1892`
 - `QUAY_1892`
 - `FILL_1892`
@@ -135,4 +91,4 @@ Create independent objects/collections for:
 - `WORKERS_1892`
 - `HORSE_CART_1892`
 
-This keeps the building geometry independent from the foreground historical action and allows masked AI edits later.
+This allows masked AI edits and source restoration without contaminating locked façades.
