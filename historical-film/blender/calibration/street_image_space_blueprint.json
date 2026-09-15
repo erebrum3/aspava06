@@ -14,7 +14,7 @@
   },
   "coordinate_origin": "top-left",
   "status": "FIRST_PASS_IMAGE_SPACE_SCAFFOLD",
-  "precision_note": "Coordinates are intended for exact single-view alignment of the generated master frame. Occluded façade edges are estimated and must be refined by overlay after the first Blender render.",
+  "precision_note": "Coordinates are intended for exact single-view alignment of the generated master frame. Occluded facade edges and the street-surface polygon are first-pass estimates and must be refined by overlay before final historical rendering.",
   "buildings": [
     {"id":"LT01","xL":52,"xR":102,"roof_peak":[79,105],"eave_y":149,"base_y":242,"silhouette_polygon":[[52,242],[52,149],[79,105],[102,149],[102,242]]},
     {"id":"LT02","xL":102,"xR":151,"roof_peak":[126,102],"eave_y":146,"base_y":242,"silhouette_polygon":[[102,242],[102,146],[126,102],[151,146],[151,242]]},
@@ -32,5 +32,21 @@
     "PLOT_RIGHT_BASE": [398,242],
     "RN_PEAK": [414,143],
     "SQUARE_NEAR_CENTER": [470,285]
+  },
+  "editable_regions": {
+    "PLOT01_REPLACEMENT": {
+      "source": "building:PLOT01",
+      "rule": "Only the plot building may change inside this silhouette. Keep its parcel edges fixed."
+    },
+    "STREET_SURFACE_PRIMARY": {
+      "polygon": [[228,238],[441,238],[553,257],[652,286],[621,340],[238,340],[191,304]],
+      "rule": "Primary street/square surface edit region. Intended for canal/quay/fill transformation while preserving surrounding buildings and foreground roofs."
+    }
+  },
+  "mask_policy": {
+    "white": "editable",
+    "black": "restore exactly from source",
+    "1891_93_combined": ["PLOT01_REPLACEMENT", "STREET_SURFACE_PRIMARY"],
+    "protected_buildings": ["LT01","LT02","LT03","LT04","LT05","RN01"]
   }
 }
