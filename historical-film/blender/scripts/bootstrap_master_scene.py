@@ -1,27 +1,40 @@
-"""Bootstrap the geometry-locked Schiedam historical-film master scene.
+"""Bootstrap the LOCAL image-space validation scaffold for the Schiedam film.
 
-The master aerial is 941x1672. The script uses the exact source resolution and
-stores first-pass image-space targets on every target-row proxy. These targets
-are calibration guides, not surveyed geometry: trees and occlusion hide some
-parcel edges, so final alignment must be refined by overlay.
+Important: this file does NOT create or solve the canonical geographic camera.
+The canonical camera is owned by erebrum-system (85 m / 282 deg / 78 deg /
+vertical FOV 35 deg / roll 0 / 941x1672). This script creates a local camera
+named Camera_Validation_Local only so masks, proxy silhouettes and pixel targets
+can be checked inside a lightweight Blender scene.
 """
 
 import bpy
+import math
 from mathutils import Vector
 
-ROOT_NAME = "HISTORICAL_FILM_MASTER"
-REFERENCE_IMAGE_PATH = ""  # Set to the local absolute path of the 941x1672 master image.
+ROOT_NAME = "HISTORICAL_FILM_VALIDATION_LOCAL"
+VALIDATION_CAMERA_NAME = "Camera_Validation_Local"
+REFERENCE_IMAGE_PATH = ""
 RESET_GENERATED_ROOT = True
 
 RENDER_X = 941
 RENDER_Y = 1672
-LENS_MM = 65.0
-SENSOR_WIDTH_MM = 36.0
-PIXEL_TO_PROXY_X = 0.08  # Relative scaffold scale only; not a real-world measurement.
+VFOV_DEG = 35.0
+SENSOR_HEIGHT_MM = 36.0
+PIXEL_TO_PROXY_X = 0.08
 MASTER_PLOT_CENTER_PX = 355.0
 
-# First-pass calibration extracted from the supplied master frame.
-# IDs intentionally describe role rather than assuming historical parcel identity.
+CANONICAL_CAMERA = {
+    "source": "erebrum-system/sites/aspava/video-tests/2026-07-24/master-85m-78deg/geometri-gercegi/kamera-KANONIK.json",
+    "rd_x": 87444.969,
+    "rd_y": 436872.101,
+    "alt_m": 85.0,
+    "heading_deg": 282.0,
+    "tilt_deg": 78.0,
+    "vfov_deg": 35.0,
+    "roll_deg": 0.0,
+    "render": "941x1672",
+}
+
 BUILDINGS = [
     {"id": "LT01",   "xL": 52,  "xR": 102, "peak": (79, 925),  "base_y": 1082, "h": 6.2, "roof": 2.0, "lock": "HARD"},
     {"id": "LT02",   "xL": 102, "xR": 151, "peak": (126, 922), "base_y": 1082, "h": 6.2, "roof": 2.1, "lock": "HARD"},
@@ -33,7 +46,8 @@ BUILDINGS = [
 ]
 
 AOI_PX = (45, 905, 435, 1090)
-ROW_BASELINE_PX = ((48, 1082), (425, 1082))
+ROW_GROUNDLINE_Y = 1082
+LIGHT_ANCHOR_PX = (362, 1062)
 
 
 def px_center_to_world_x(xL, xR):
@@ -145,34 +159,35 @@ def setup_scene():
             remove_collection_recursive(old)
 
     root = ensure_collection(ROOT_NAME)
-    camera_col = ensure_collection("00_CAMERA", root)
+    camera_col = ensure_collection("00_LOCAL_VALIDATION_CAMERA", root)
     ref_col = ensure_collection("01_REFERENCE", root)
     geo_col = ensure_collection("02_GEO_PROXY", root)
     anchor_col = ensure_collection("03_ANCHORS", root)
     ground_col = ensure_collection("04_GROUND", root)
     tree_col = ensure_collection("05_TREE_MARKERS", root)
-    era_col = ensure_collection("10_ERA_1891_93", root)
-    ensure_collection("CANAL_1891_93", era_col)
-    ensure_collection("QUAY_1891_93", era_col)
-    ensure_collection("WORKERS_1891_93", era_col)
-    ensure_collection("HORSE_CART_1891_93", era_col)
+    era_col = ensure_collection("10_ERA_1891_93_CLOSEUP", root)
+    for name in ["CANAL_1891_93", "QUAY_1891_93", "WORKERS_1891_93", "HORSE_CART_1891_93"]:
+        ensure_collection(name, era_col)
 
-    cam_data = bpy.data.cameras.new("Camera_Master_DATA")
-    cam_data.lens = LENS_MM
-    cam_data.sensor_width = SENSOR_WIDTH_MM
-    cam = bpy.data.objects.new("Camera_Master", cam_data)
+    # Local projection helper only. Matching the canonical vFOV prevents a second
+    # competing lens convention while keeping world coordinates intentionally local.
+    cam_data = bpy.data.cameras.new(f"{VALIDATION_CAMERA_NAME}_DATA")
+    cam_data.sensor_fit = 'VERTICAL'
+    cam_data.sensor_height = SENSOR_HEIGHT_MM
+    cam_data.lens = SENSOR_HEIGHT_MM / (2.0 * math.tan(math.radians(VFOV_DEG) / 2.0))
+    cam = bpy.data.objects.new(VALIDATION_CAMERA_NAME, cam_data)
     camera_col.objects.link(cam)
     cam.location = (0.0, -32.0, 22.0)
     look_at(cam, (0.0, 0.0, 4.0))
     cam.lock_location = (True, True, True)
     cam.lock_rotation = (True, True, True)
-    cam["status"] = "STARTING_CAMERA_NOT_SOLVED"
-    cam["master_resolution"] = "941x1672"
+    cam["status"] = "LOCAL_IMAGE_SPACE_VALIDATION_ONLY"
+    cam["not_canonical_geo_camera"] = True
+    cam["canonical_source"] = CANONICAL_CAMERA["source"]
     scene.camera = cam
 
     add_reference_image(ref_col)
 
-    # Shallow depths are deliberate: only the camera-view silhouette matters at this stage.
     for spec in BUILDINGS:
         x = px_center_to_world_x(spec["xL"], spec["xR"])
         w = px_width_to_world(spec["xL"], spec["xR"])
@@ -182,7 +197,6 @@ def setup_scene():
         body["preserve_level"] = spec["lock"]
         body["role"] = "PLOT_SLOT" if spec["id"] == "PLOT01" else ("RIGHT_NEIGHBOUR" if spec["id"] == "RN01" else "LEFT_TERRACE")
         attach_pixel_targets(body, spec)
-
         roof = add_gable_roof(f"{spec['id']}_ROOF", x, w, d, spec["h"], spec["roof"], geo_col)
         roof["building_id"] = spec["id"]
         roof["preserve_level"] = spec["lock"]
@@ -195,31 +209,30 @@ def setup_scene():
     plot_slot.display_type = 'WIRE'
     plot_slot["target_xL_px"] = plot["xL"]
     plot_slot["target_xR_px"] = plot["xR"]
-    plot_slot["rule"] = "Era-specific PLOT01 replacements must remain inside this slot."
+    plot_slot["rule"] = "Era-specific PLOT01 replacements stay inside this slot."
 
     anchor_specs = {
-        "A01_ROW_LEFT": (52, 1082),
+        "A01_ROW_LEFT_GROUND": (52, 1082),
         "A02_LT05_ROOF": (280, 919),
-        "A03_PLOT_LEFT": (312, 1082),
-        "A04_PLOT_CENTER": (355, 1082),
-        "A05_PLOT_RIGHT": (398, 1082),
-        "A06_RN_CENTER": (414, 1082),
+        "A03_PLOT_LEFT_GROUND": (312, 1082),
+        "A04_PLOT_CENTER_GROUND": (355, 1082),
+        "A05_PLOT_RIGHT_GROUND": (398, 1082),
+        "A06_RN_CENTER_GROUND": (414, 1082),
         "A07_RN_ROOF": (414, 963),
-        "A08_ROW_RIGHT": (429, 1082),
+        "A08_ROW_RIGHT_GROUND": (429, 1082),
+        "A09_WARM_LIGHT": LIGHT_ANCHOR_PX,
     }
     for name, (px, py) in anchor_specs.items():
         x = (px - MASTER_PLOT_CENTER_PX) * PIXEL_TO_PROXY_X
         anchor = add_empty(name, (x, -3.0, 0.15 if py >= 1000 else 7.5), anchor_col)
         anchor["target_x_px"] = px
         anchor["target_y_px"] = py
-        anchor["lock"] = "HARD_IMAGE_SPACE_TARGET"
+        anchor["lock"] = "IMAGE_SPACE_TARGET"
 
     ground = add_cube("GROUND_SQUARE", (4.0, -8.0, -0.15), (32.0, 18.0, 0.3), ground_col)
     ground.display_type = 'WIRE'
-    ground["target_row_baseline_px"] = str(ROW_BASELINE_PX)
-    ground["preserve_level"] = "HARD_SHAPE_AFTER_MATCH"
+    ground["row_groundline_y_px"] = ROW_GROUNDLINE_Y
 
-    # Perspective markers only; positions are deliberately provisional.
     for idx, loc in enumerate([(-8.0, -8.0, 2.0), (-2.5, -8.5, 2.0), (5.0, -8.0, 2.0), (11.0, -7.5, 2.0)], start=1):
         bpy.ops.mesh.primitive_cylinder_add(vertices=12, radius=0.14, depth=4.0, location=loc)
         tree = bpy.context.object
@@ -229,12 +242,14 @@ def setup_scene():
 
     root["master_image_size"] = "941x1672"
     root["aoi_px"] = str(AOI_PX)
-    root["workflow"] = "CAMERA_MATCH -> PIXEL_OVERLAY_CHECK -> GEOMETRY_LOCK -> NEUTRAL_MASTER -> ERA_TRANSFORMS"
-    root["calibration_status"] = "FIRST_PASS; REFINE OCCLUDED EDGES BY OVERLAY"
+    root["row_groundline_y_px"] = ROW_GROUNDLINE_Y
+    root["warm_light_anchor_px"] = str(LIGHT_ANCHOR_PX)
+    root["canonical_camera_source"] = CANONICAL_CAMERA["source"]
+    root["workflow"] = "LOCAL_PIXEL_VALIDATION -> MASK_QA -> ERA_LOCAL_EDIT; CANONICAL CAMERA REMAINS IN EREBRUM-SYSTEM"
 
-    print("Historical Film calibrated master scaffold created.")
-    print("Render resolution is locked to the 941x1672 source master.")
-    print("Next: unlock Camera_Master and align proxy boundaries/roof peaks to their target_*_px properties.")
+    print("Local historical-film validation scaffold created.")
+    print("Camera_Validation_Local is NOT the canonical geographic camera.")
+    print("Do not camera-solve here. Adjust local proxies/calibration only, then validate pixel error.")
 
 
 if __name__ == "__main__":
