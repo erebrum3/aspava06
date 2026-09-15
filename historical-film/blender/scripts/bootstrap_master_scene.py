@@ -1,59 +1,47 @@
-"""Bootstrap the Schiedam historical-film master scene in Blender.
+"""Bootstrap the geometry-locked Schiedam historical-film master scene.
 
-Run inside Blender's Scripting workspace. The script creates a non-destructive
-master collection containing:
-- Camera_Master (2:3 portrait, 65 mm starting lens)
-- TR01..TR06 proxy buildings
-- PLOT_SLOT / right-neighbour metadata
-- A01..A08 alignment anchors
-- GROUND_SQUARE proxy
-- TREE_01..TREE_04 marker cylinders
-- dedicated 1891-93 collections for later canal-fill work
-
-The dimensions below are placeholders for camera matching. They are deliberately
-simple. Fit them to the reference image before adding architectural detail.
+The master aerial is 941x1672. The script uses the exact source resolution and
+stores first-pass image-space targets on every target-row proxy. These targets
+are calibration guides, not surveyed geometry: trees and occlusion hide some
+parcel edges, so final alignment must be refined by overlay.
 """
 
 import bpy
-import math
 from mathutils import Vector
 
 ROOT_NAME = "HISTORICAL_FILM_MASTER"
-REFERENCE_IMAGE_PATH = ""  # Optional absolute path to the aerial master image.
+REFERENCE_IMAGE_PATH = ""  # Set to the local absolute path of the 941x1672 master image.
 RESET_GENERATED_ROOT = True
 
-RENDER_X = 1024
-RENDER_Y = 1536
+RENDER_X = 941
+RENDER_Y = 1672
 LENS_MM = 65.0
 SENSOR_WIDTH_MM = 36.0
+PIXEL_TO_PROXY_X = 0.08  # Relative scaffold scale only; not a real-world measurement.
+MASTER_PLOT_CENTER_PX = 355.0
 
-# Placeholder world-space layout. Keep IDs stable; change only dimensions/positions.
+# First-pass calibration extracted from the supplied master frame.
+# IDs intentionally describe role rather than assuming historical parcel identity.
 BUILDINGS = [
-    {"id": "TR01", "x": -11.0, "w": 3.2, "d": 6.0, "h": 6.0, "roof": 2.2, "lock": "HARD"},
-    {"id": "TR02", "x": -7.8,  "w": 3.0, "d": 6.0, "h": 6.1, "roof": 2.4, "lock": "HARD"},
-    {"id": "TR03", "x": -4.8,  "w": 3.1, "d": 6.0, "h": 6.0, "roof": 2.3, "lock": "HARD"},
-    {"id": "TR04", "x": -1.7,  "w": 3.3, "d": 6.2, "h": 6.2, "roof": 2.1, "lock": "HARD"},
-    {"id": "TR05", "x":  1.8,  "w": 3.8, "d": 6.4, "h": 7.0, "roof": 2.0, "lock": "FOOTPRINT"},
-    {"id": "TR06", "x":  5.4,  "w": 3.0, "d": 5.8, "h": 5.3, "roof": 1.8, "lock": "HARD"},
+    {"id": "LT01",   "xL": 52,  "xR": 102, "peak": (79, 925),  "base_y": 1062, "h": 6.2, "roof": 2.0, "lock": "HARD"},
+    {"id": "LT02",   "xL": 102, "xR": 151, "peak": (126, 922), "base_y": 1062, "h": 6.2, "roof": 2.1, "lock": "HARD"},
+    {"id": "LT03",   "xL": 151, "xR": 201, "peak": (176, 922), "base_y": 1062, "h": 6.2, "roof": 2.1, "lock": "HARD"},
+    {"id": "LT04",   "xL": 201, "xR": 250, "peak": (226, 920), "base_y": 1062, "h": 6.2, "roof": 2.1, "lock": "HARD"},
+    {"id": "LT05",   "xL": 250, "xR": 312, "peak": (280, 919), "base_y": 1062, "h": 6.4, "roof": 2.2, "lock": "HARD"},
+    {"id": "PLOT01", "xL": 312, "xR": 398, "peak": (354, 946), "base_y": 1062, "h": 7.0, "roof": 2.0, "lock": "FOOTPRINT"},
+    {"id": "RN01",   "xL": 398, "xR": 429, "peak": (414, 963), "base_y": 1062, "h": 5.3, "roof": 1.5, "lock": "HARD"},
 ]
 
-ANCHORS = {
-    "A01_LEFT_ROW_START": (-12.6, 0.0, 0.0),
-    "A02_LEFT_ROOF_RHYTHM": (-7.8, 0.0, 8.5),
-    "A03_PLOT_LEFT": (-0.1, 0.0, 0.0),
-    "A04_PLOT_CENTER": (1.8, 0.0, 0.0),
-    "A05_PLOT_RIGHT": (3.7, 0.0, 0.0),
-    "A06_RIGHT_NEIGHBOUR_DOOR": (5.4, -3.05, 1.1),
-    "A07_RIGHT_NEIGHBOUR_ROOF": (5.4, 0.0, 7.1),
-    "A08_ROW_END": (6.9, 0.0, 0.0),
-}
+AOI_PX = (45, 905, 435, 1072)
+ROW_BASELINE_PX = ((48, 1061), (425, 1061))
 
-TREE_MARKERS = [
-    (-9.0, -7.5, 0.0),
-    (-3.5, -8.3, 0.0),
-    (2.3, -8.0, 0.0),
-    (6.0, -7.0, 0.0),
-]
+
+def px_center_to_world_x(xL, xR):
+    return (((xL + xR) / 2.0) - MASTER_PLOT_CENTER_PX) * PIXEL_TO_PROXY_X
+
+
+def px_width_to_world(xL, xR):
+    return (xR - xL) * PIXEL_TO_PROXY_X
 
 
 def remove_collection_recursive(collection):
@@ -68,10 +56,7 @@ def ensure_collection(name, parent=None):
     col = bpy.data.collections.get(name)
     if col is None:
         col = bpy.data.collections.new(name)
-        if parent is None:
-            bpy.context.scene.collection.children.link(col)
-        else:
-            parent.children.link(col)
+        (bpy.context.scene.collection if parent is None else parent).children.link(col)
     return col
 
 
@@ -92,7 +77,6 @@ def add_cube(name, location, dimensions, collection):
 
 
 def add_gable_roof(name, x, width, depth, eave_z, roof_height, collection):
-    # Triangular prism aligned along Y.
     mesh = bpy.data.meshes.new(f"{name}_MESH")
     x0, x1 = -width / 2.0, width / 2.0
     y0, y1 = -depth / 2.0, depth / 2.0
@@ -100,12 +84,7 @@ def add_gable_roof(name, x, width, depth, eave_z, roof_height, collection):
         (x0, y0, 0), (x1, y0, 0), (0, y0, roof_height),
         (x0, y1, 0), (x1, y1, 0), (0, y1, roof_height),
     ]
-    faces = [
-        (0, 1, 2), (3, 5, 4),
-        (0, 3, 4, 1),
-        (1, 4, 5, 2),
-        (2, 5, 3, 0),
-    ]
+    faces = [(0, 1, 2), (3, 5, 4), (0, 3, 4, 1), (1, 4, 5, 2), (2, 5, 3, 0)]
     mesh.from_pydata(verts, [], faces)
     mesh.update()
     obj = bpy.data.objects.new(name, mesh)
@@ -146,6 +125,14 @@ def add_reference_image(collection):
     return obj
 
 
+def attach_pixel_targets(obj, spec):
+    obj["target_xL_px"] = spec["xL"]
+    obj["target_xR_px"] = spec["xR"]
+    obj["target_roof_peak_x_px"] = spec["peak"][0]
+    obj["target_roof_peak_y_px"] = spec["peak"][1]
+    obj["target_base_y_px"] = spec["base_y"]
+
+
 def setup_scene():
     scene = bpy.context.scene
     scene.render.resolution_x = RENDER_X
@@ -170,7 +157,6 @@ def setup_scene():
     ensure_collection("WORKERS_1891_93", era_col)
     ensure_collection("HORSE_CART_1891_93", era_col)
 
-    # Camera: intentionally a starting point, not a solved camera.
     cam_data = bpy.data.cameras.new("Camera_Master_DATA")
     cam_data.lens = LENS_MM
     cam_data.sensor_width = SENSOR_WIDTH_MM
@@ -181,69 +167,74 @@ def setup_scene():
     cam.lock_location = (True, True, True)
     cam.lock_rotation = (True, True, True)
     cam["status"] = "STARTING_CAMERA_NOT_SOLVED"
-    cam["rule"] = "Unlock only during camera-match. Re-lock after alignment."
+    cam["master_resolution"] = "941x1672"
     scene.camera = cam
 
     add_reference_image(ref_col)
 
+    # Shallow depths are deliberate: only the camera-view silhouette matters at this stage.
     for spec in BUILDINGS:
-        body = add_cube(
-            f"{spec['id']}_BODY",
-            (spec['x'], 0.0, spec['h'] / 2.0),
-            (spec['w'], spec['d'], spec['h']),
-            geo_col,
-        )
+        x = px_center_to_world_x(spec["xL"], spec["xR"])
+        w = px_width_to_world(spec["xL"], spec["xR"])
+        d = 5.5
+        body = add_cube(f"{spec['id']}_BODY", (x, 0.0, spec["h"] / 2.0), (w, d, spec["h"]), geo_col)
         body["building_id"] = spec["id"]
         body["preserve_level"] = spec["lock"]
-        body["historical_action"] = (
-            "REPLACE_WITH_MODEST_2_STOREY_HOUSE" if spec["id"] == "TR05"
-            else "PRESERVE_GEOMETRY"
-        )
-        if spec["id"] == "TR05":
-            body["role"] = "PLOT_SLOT"
-        elif spec["id"] == "TR06":
-            body["role"] = "RIGHT_NEIGHBOUR"
-        else:
-            body["role"] = "TARGET_ROW"
+        body["role"] = "PLOT_SLOT" if spec["id"] == "PLOT01" else ("RIGHT_NEIGHBOUR" if spec["id"] == "RN01" else "LEFT_TERRACE")
+        attach_pixel_targets(body, spec)
 
-        roof = add_gable_roof(
-            f"{spec['id']}_ROOF",
-            spec['x'], spec['w'], spec['d'], spec['h'], spec['roof'], geo_col
-        )
+        roof = add_gable_roof(f"{spec['id']}_ROOF", x, w, d, spec["h"], spec["roof"], geo_col)
         roof["building_id"] = spec["id"]
         roof["preserve_level"] = spec["lock"]
+        attach_pixel_targets(roof, spec)
 
-    # Plot slot outline: use as the immutable footprint reference for historical replacements.
-    plot = next(item for item in BUILDINGS if item["id"] == "TR05")
-    plot_slot = add_cube(
-        "PLOT_SLOT_REFERENCE",
-        (plot["x"], 0.0, 0.08),
-        (plot["w"], plot["d"], 0.16),
-        anchor_col,
-    )
+    plot = next(item for item in BUILDINGS if item["id"] == "PLOT01")
+    plot_x = px_center_to_world_x(plot["xL"], plot["xR"])
+    plot_w = px_width_to_world(plot["xL"], plot["xR"])
+    plot_slot = add_cube("PLOT_SLOT_REFERENCE", (plot_x, 0.0, 0.08), (plot_w, 5.5, 0.16), anchor_col)
     plot_slot.display_type = 'WIRE'
-    plot_slot["rule"] = "Historical TR05 geometry must remain inside this footprint."
+    plot_slot["target_xL_px"] = plot["xL"]
+    plot_slot["target_xR_px"] = plot["xR"]
+    plot_slot["rule"] = "Era-specific PLOT01 replacements must remain inside this slot."
 
-    for name, loc in ANCHORS.items():
-        anchor = add_empty(name, loc, anchor_col)
-        anchor["lock"] = "HARD"
+    anchor_specs = {
+        "A01_ROW_LEFT": (52, 1062),
+        "A02_LT05_ROOF": (280, 919),
+        "A03_PLOT_LEFT": (312, 1062),
+        "A04_PLOT_CENTER": (355, 1062),
+        "A05_PLOT_RIGHT": (398, 1062),
+        "A06_RN_CENTER": (414, 1062),
+        "A07_RN_ROOF": (414, 963),
+        "A08_ROW_RIGHT": (429, 1062),
+    }
+    for name, (px, py) in anchor_specs.items():
+        x = (px - MASTER_PLOT_CENTER_PX) * PIXEL_TO_PROXY_X
+        anchor = add_empty(name, (x, -3.0, 0.15 if py >= 1000 else 7.5), anchor_col)
+        anchor["target_x_px"] = px
+        anchor["target_y_px"] = py
+        anchor["lock"] = "HARD_IMAGE_SPACE_TARGET"
 
-    ground = add_cube("GROUND_SQUARE", (0.0, -7.0, -0.15), (28.0, 16.0, 0.3), ground_col)
+    ground = add_cube("GROUND_SQUARE", (4.0, -8.0, -0.15), (32.0, 18.0, 0.3), ground_col)
     ground.display_type = 'WIRE'
+    ground["target_row_baseline_px"] = str(ROW_BASELINE_PX)
     ground["preserve_level"] = "HARD_SHAPE_AFTER_MATCH"
 
-    for idx, loc in enumerate(TREE_MARKERS, start=1):
-        bpy.ops.mesh.primitive_cylinder_add(vertices=12, radius=0.14, depth=4.0, location=(loc[0], loc[1], 2.0))
+    # Perspective markers only; positions are deliberately provisional.
+    for idx, loc in enumerate([(-8.0, -8.0, 2.0), (-2.5, -8.5, 2.0), (5.0, -8.0, 2.0), (11.0, -7.5, 2.0)], start=1):
+        bpy.ops.mesh.primitive_cylinder_add(vertices=12, radius=0.14, depth=4.0, location=loc)
         tree = bpy.context.object
         tree.name = f"TREE_{idx:02d}_MARKER"
         link_only(tree, tree_col)
         tree["role"] = "PERSPECTIVE_ANCHOR_ONLY"
 
-    root["workflow"] = "CAMERA_MATCH -> GEOMETRY_LOCK -> NEUTRAL_MASTER -> ERA_TRANSFORMS"
-    root["do_not_detail_yet"] = True
+    root["master_image_size"] = "941x1672"
+    root["aoi_px"] = str(AOI_PX)
+    root["workflow"] = "CAMERA_MATCH -> PIXEL_OVERLAY_CHECK -> GEOMETRY_LOCK -> NEUTRAL_MASTER -> ERA_TRANSFORMS"
+    root["calibration_status"] = "FIRST_PASS; REFINE OCCLUDED EDGES BY OVERLAY"
 
-    print("Historical Film master scene created.")
-    print("Next: unlock Camera_Master temporarily and fit proxies to the master reference.")
+    print("Historical Film calibrated master scaffold created.")
+    print("Render resolution is locked to the 941x1672 source master.")
+    print("Next: unlock Camera_Master and align proxy boundaries/roof peaks to their target_*_px properties.")
 
 
 if __name__ == "__main__":
