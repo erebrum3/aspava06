@@ -1,50 +1,50 @@
 # Blender master-scene workflow
 
-This folder is for the geometry-locked Schiedam historical-film setup.
+This folder contains the geometry-locked Schiedam historical-film scaffold.
 
 ## First run
-
-1. Open Blender and switch to **Scripting**.
+1. Open Blender → **Scripting**.
 2. Open `scripts/bootstrap_master_scene.py`.
-3. Optional: set `REFERENCE_IMAGE_PATH` to an absolute path for the aerial master image.
+3. Set `REFERENCE_IMAGE_PATH` to the local absolute path of the 941×1672 master image.
 4. Run the script.
 5. Switch to camera view (`Numpad 0`).
 
 The script creates `HISTORICAL_FILM_MASTER` with:
-
 - `Camera_Master`
-- TR01..TR06 proxy bodies and roofs
+- exact source render resolution: 941×1672
+- refined target-row proxies `LT01..LT05`, `PLOT01`, `RN01`
 - `PLOT_SLOT_REFERENCE`
-- A01..A08 alignment anchors
+- A01..A08 image-space anchors
 - `GROUND_SQUARE`
-- tree markers
-- empty 1891-93 canal/quay/worker/cart collections
+- provisional tree perspective markers
+- empty 1891–93 canal/quay/worker/cart collections
+
+Pixel calibration lives in `../docs/MASTER_PIXEL_CALIBRATION_941x1672.json` and is also stored as custom `target_*_px` properties on the target-row proxy objects.
 
 ## Important rule
-
-The generated geometry is a **camera-match scaffold**, not a reconstruction. The starting camera and proxy dimensions are placeholders. Do not add façade detail, historical props or textures until the silhouette and street geometry match the master frame.
+The generated geometry is a **camera-match scaffold**, not a finished reconstruction. The starting camera lens/location and world-space proxy dimensions remain provisional. Do not add facade detail, historical props or textures until the silhouette and street geometry match the master by overlay.
 
 ## Camera-match order
-
 1. Temporarily unlock `Camera_Master` transforms.
 2. Match roll/horizon first.
 3. Match pitch.
 4. Adjust lens and camera distance together.
-5. Align target-row ground line.
-6. Fit TR01..TR06 widths/heights.
-7. Fit roof peaks.
-8. Fit `GROUND_SQUARE` and tree markers.
-9. Re-lock camera transforms.
-10. Overlay a viewport/render against the reference and correct local geometry rather than moving the camera again.
+5. Align the target-row baseline to roughly y=1061/1062 in the 941×1672 frame.
+6. Fit `LT01..LT05` visible frontage boundaries.
+7. Fit `PLOT01` to approx x=312..398.
+8. Fit `RN01` to approx x=398..429.
+9. Fit roof peaks to the object's `target_roof_peak_*_px` custom properties.
+10. Fit square/street geometry and retained tree anchors.
+11. Re-lock camera transforms.
+12. Overlay render/reference; after this point correct local geometry rather than moving the camera.
 
-## TR05 / plot rule
+## PLOT01 rule
+`PLOT01` is a **slot**, not a facade that must survive through time. Era-specific historical replacements stay inside `PLOT_SLOT_REFERENCE`. The later/current mass can be hidden and replaced by `PLOT01_1892`, `PLOT01_1907`, etc., without changing the camera or slot boundaries.
 
-TR05 is treated as a **parcel slot**, not as a façade that must survive through time. Its historical replacement must remain inside `PLOT_SLOT_REFERENCE`. The current TR05 mass can later be hidden and replaced by `TR05_1892`, `TR05_1907`, etc., while preserving the same slot and camera.
+## Calibration caveat
+Some facade/parcel boundaries are obscured by trees in the master image. The current pixel values are first-pass visual targets. Refine them only through overlay inspection; do not pretend hidden boundaries are known more precisely than the source supports.
 
-## File progression
-
-Recommended saved files:
-
+## Recommended file progression
 - `SCHIEDAM_MASTER_CAMERA_v01.blend`
 - `SCHIEDAM_NEUTRAL_MASTER_v01.blend`
 - `SCHIEDAM_1891_93_v01.blend`
