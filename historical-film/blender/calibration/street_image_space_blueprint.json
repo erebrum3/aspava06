@@ -1,20 +1,11 @@
 {
   "source_crop": "target_crop.png",
-  "source_crop_size": {
-    "width": 941,
-    "height": 340
-  },
-  "full_frame_size": {
-    "width": 941,
-    "height": 1672
-  },
-  "crop_offset_in_full_frame": {
-    "x": 0,
-    "y": 820
-  },
+  "source_crop_size": {"width": 941, "height": 340},
+  "full_frame_size": {"width": 941, "height": 1672},
+  "crop_offset_in_full_frame": {"x": 0, "y": 820},
   "coordinate_origin": "top-left",
   "status": "FIRST_PASS_IMAGE_SPACE_SCAFFOLD",
-  "precision_note": "Coordinates are intended for exact single-view alignment of the generated master frame. Occluded facade edges and the street-surface polygon are first-pass estimates and must be refined by overlay before final historical rendering.",
+  "precision_note": "Coordinates are intended for exact single-view validation of the generated master frame. Occluded facade edges and the street-surface polygon are first-pass estimates. Refine local geometry/calibration by overlay; do not refit the canonical camera.",
   "buildings": [
     {"id":"LT01","xL":52,"xR":102,"roof_peak":[79,105],"eave_y":149,"base_y":262,"silhouette_polygon":[[52,262],[52,149],[79,105],[102,149],[102,262]]},
     {"id":"LT02","xL":102,"xR":151,"roof_peak":[126,102],"eave_y":146,"base_y":262,"silhouette_polygon":[[102,262],[102,146],[126,102],[151,146],[151,262]]},
@@ -24,7 +15,15 @@
     {"id":"PLOT01","xL":312,"xR":398,"roof_peak":[354,126],"eave_y":164,"base_y":262,"silhouette_polygon":[[312,262],[312,164],[354,126],[398,164],[398,262]]},
     {"id":"RN01","xL":398,"xR":429,"roof_peak":[414,143],"eave_y":174,"base_y":262,"silhouette_polygon":[[398,262],[398,174],[414,143],[429,174],[429,262]]}
   ],
-  "corrections": ["2026-09-15: row base 242 -> 262 (full frame 1062 -> 1082); street polygon top edge moved below the shop-window sill."],
+  "semantic_targets": {
+    "row_groundline_crop_y": 262,
+    "row_groundline_full_y": 1082,
+    "row_groundline_semantic": "facade_ground_contact",
+    "warm_light_anchor_crop": [362,242],
+    "warm_light_anchor_full": [362,1062],
+    "warm_light_anchor_semantic": "PLOT01_ground_floor_match_cut"
+  },
+  "corrections": ["2026-09-15: row base 242 -> 262 (full frame 1062 -> 1082); y=1082 is facade-ground contact, not the warm-light centre. The separate warm-light anchor remains full-frame (362,1062)."],
   "anchors": {
     "ROW_BASE_LEFT": [48,262],
     "ROW_BASE_RIGHT": [429,262],
@@ -32,6 +31,7 @@
     "PLOT_CENTER_PEAK": [354,126],
     "PLOT_RIGHT_BASE": [398,262],
     "RN_PEAK": [414,143],
+    "LIGHT_ANCHOR": [362,242],
     "SQUARE_NEAR_CENTER": [470,285]
   },
   "editable_regions": {
