@@ -1,52 +1,71 @@
 # Blender master-scene workflow
 
-This folder contains the geometry-locked Schiedam historical-film scaffold.
+This folder contains the Schiedam historical-film image-space scaffold and validation helpers.
+
+## Source-of-truth rule
+
+The canonical geographic camera is owned by `erebrum-system`, not by this folder. Current canonical values recorded for validation are:
+- altitude 85 m
+- heading 282°
+- tilt 78°
+- vertical FOV 35°
+- roll 0°
+- render 941×1672
+
+Do **not** re-solve or visually nudge the canonical camera from this repo. The local scaffold exists to validate silhouettes, masks and projected pixel targets.
 
 ## First run
 1. Open Blender → **Scripting**.
 2. Open `scripts/bootstrap_master_scene.py`.
 3. Set `REFERENCE_IMAGE_PATH` to the local absolute path of the 941×1672 master image.
 4. Run the script.
-5. Switch to camera view (`Numpad 0`).
+5. Run `build_image_space_scaffold.py`.
+6. Switch to camera view (`Numpad 0`).
+7. Use `validate_proxy_alignment.py` after local proxy adjustments.
 
-The script creates `HISTORICAL_FILM_MASTER` with:
-- `Camera_Master`
-- exact source render resolution: 941×1672
-- refined target-row proxies `LT01..LT05`, `PLOT01`, `RN01`
-- `PLOT_SLOT_REFERENCE`
-- A01..A08 image-space anchors
-- `GROUND_SQUARE`
-- provisional tree perspective markers
-- empty 1891–93 canal/quay/worker/cart collections
+## Target-row IDs
+- `LT01..LT05`
+- `PLOT01`
+- `RN01`
 
-Pixel calibration lives in `../docs/MASTER_PIXEL_CALIBRATION_941x1672.json` and is also stored as custom `target_*_px` properties on the target-row proxy objects.
+## Current semantic targets
+- row ground-contact / façade groundline: **y=1082**
+- `PLOT01` visible x bounds: **312..398**
+- `RN01` visible x bounds: **398..429**
+- warm-light match-cut anchor: **(362,1062)**
+- AOI: **(45,905) .. (435,1090)**
 
-## Important rule
-The generated geometry is a **camera-match scaffold**, not a finished reconstruction. The starting camera lens/location and world-space proxy dimensions remain provisional. Do not add facade detail, historical props or textures until the silhouette and street geometry match the master by overlay.
+The y=1082 groundline and the y=1062 warm-light anchor are intentionally separate targets.
 
-## Camera-match order
-1. Temporarily unlock `Camera_Master` transforms.
-2. Match roll/horizon first.
-3. Match pitch.
-4. Adjust lens and camera distance together.
-5. Align the target-row baseline to y=1082 (measured shop-window sill) in the 941×1672 frame.
-6. Fit `LT01..LT05` visible frontage boundaries.
-7. Fit `PLOT01` to approx x=312..398.
-8. Fit `RN01` to approx x=398..429.
-9. Fit roof peaks to the object's `target_roof_peak_*_px` custom properties.
-10. Fit square/street geometry and retained tree anchors.
-11. Re-lock camera transforms.
-12. Overlay render/reference; after this point correct local geometry rather than moving the camera.
+## Validation order
+1. Keep the canonical geographic camera immutable in the source geometry pipeline.
+2. Use this repo's local scaffold only for image-space QA.
+3. Confirm render resolution = 941×1672.
+4. Overlay the proxy render with the master frame.
+5. Validate roof rhythm and row groundline.
+6. Validate `PLOT01` and `RN01` boundaries.
+7. Correct local proxy geometry/calibration rather than changing camera truth.
+8. Once local image-space error is acceptable, proceed to masks / era-local replacements.
+
+## QA targets
+- ordinary boundaries: aim for ≤5 px
+- `PLOT01` / `RN01`: aim for ≤3 px where visible
+- roof-peak y: aim for ≤5 px
+
+Occluded edges remain approximate. Do not force false precision through trees or hidden parcel boundaries.
 
 ## PLOT01 rule
-`PLOT01` is a **slot**, not a facade that must survive through time. Era-specific historical replacements stay inside `PLOT_SLOT_REFERENCE`. The later/current mass can be hidden and replaced by `PLOT01_1892`, `PLOT01_1907`, etc., without changing the camera or slot boundaries.
+`PLOT01` is a **slot**, not a façade that must survive through time. Era-specific replacements stay inside the same image-space / parcel slot. The later/current mass can be replaced by `PLOT01_1892`, `PLOT01_1907`, etc. without shifting the slot.
 
-## Calibration caveat
-Some facade/parcel boundaries are obscured by trees in the master image. The current pixel values are first-pass visual targets. Refine them only through overlay inspection; do not pretend hidden boundaries are known more precisely than the source supports.
+## 1891–93 scope
+The older-house replacement and canal-fill masks apply to the **street-level close-up series**, not to a claimed 1891 aerial frame. Use separate passes:
+1. PLOT01 building replacement
+2. street/canal transformation
+3. exact-source restoration outside the editable masks
 
 ## Recommended file progression
-- `SCHIEDAM_MASTER_CAMERA_v01.blend`
+- `SCHIEDAM_VALIDATION_LOCAL_v01.blend`
 - `SCHIEDAM_NEUTRAL_MASTER_v01.blend`
-- `SCHIEDAM_1891_93_v01.blend`
+- `SCHIEDAM_1891_93_CLOSEUP_v01.blend`
 
-Do not overwrite the solved camera file with era-specific changes.
+Do not overwrite the source/canonical geographic camera project with era-specific edits.
