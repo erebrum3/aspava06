@@ -1,103 +1,89 @@
 # ASPAVA 06 Historical Film — Master Frame Specification
 
 ## Objective
-Create a geometry-locked master frame for the Schiedam historical reconstruction sequence. The goal is not to generate a visually similar street, but to preserve the same camera, parcel layout, street geometry, roof rhythm, and target-building positions across all eras.
+Create a geometry-locked master frame for the Schiedam historical reconstruction sequence. The goal is not to generate a visually similar street, but to preserve the same camera, parcel/roof rhythm, street geometry and target-building positions across all eras.
 
-## Core Principle
-Treat the source image as a spatial master, not merely as a visual reference.
+## Core principle
+Treat the supplied 941×1672 image as a spatial master, not merely as a visual reference.
 
-The production pipeline is:
+Pipeline:
+1. current-geometry master
+2. neutral cleaned master
+3. era-specific local transformation
 
-1. Current-geometry master
-2. Neutral cleaned master
-3. Era-specific local transformation
+Avoid full-frame regeneration after geometry lock.
 
-Avoid full-frame regeneration after the geometry has been locked.
+## Important correction after image inspection
+The initial six-proxy `TR01..TR06` scheme was too coarse for an exact match. The visible target row contains five distinct left-terrace roof/frontage units before the plot, plus the plot slot and the small right neighbour. The refined IDs below supersede the preliminary TR naming for camera matching.
 
-## Area of Interest
-`AOI_MAIN_ROW`
+## Area of interest
+`AOI_MAIN_ROW` — first-pass image-space bounds on the 941×1672 master:
+- left: x=45
+- top: y=905
+- right: x=435
+- bottom: y=1072
 
-The AOI contains:
-- the small square / open street area
-- the target house row
-- the plot parcel
-- the lower lighter right neighbour
-- foreground street/canal transformation zone
+Coordinates use a top-left origin.
 
-## Layer Model
-- `L0_SKY` — sky and horizon
-- `L1_DISTANT_CITY` — distant skyline / secondary urban fabric
-- `L2_MID_BLOCKS` — middle-distance blocks
-- `L3_TARGET_ROW` — primary house row and plot
-- `L4_FOREGROUND` — foreground roofs / canal / fill zone
+## Refined target-row IDs
+- `LT01` — left terrace unit 1, approx x=52..102
+- `LT02` — left terrace unit 2, approx x=102..151
+- `LT03` — left terrace unit 3, approx x=151..201
+- `LT04` — left terrace unit 4, approx x=201..250
+- `LT05` — left terrace unit 5, approx x=250..312
+- `PLOT01` — Aspava plot slot, approx x=312..398
+- `RN01` — lower right neighbour, approx x=398..429
 
-`L3_TARGET_ROW` is the critical geometry layer.
+These are image-space calibration segments. Where trees hide the facade or parcel edge, the boundary is an overlay target rather than a claim of surveyed cadastral geometry.
 
-## Building IDs
-Assign target-row buildings from left to right:
+Full calibration data is stored in `MASTER_PIXEL_CALIBRATION_941x1672.json`.
 
-- `TR01` — left terrace
-- `TR02` — left terrace
-- `TR03` — left terrace
-- `TR04` — transition house
-- `TR05` — PLOT / ASPAVA parcel
-- `TR06` — right neighbour
-- `TR07+` — optional right-side continuation if needed
-
-## TR05 — Plot Rules
-The current modern plot building is not historically preserved. Only its parcel slot matters.
+## PLOT01 rules
+The later/current plot facade is not the historical invariant. The invariant is its image-space/parcel slot.
 
 Preserve:
-- parcel width
-- left boundary
-- right boundary
-- position in the row
-- ground contact / frontage alignment
+- left/right slot boundary
+- row position
+- frontage alignment
+- camera-view footprint
 
 1891–93 replacement:
 - modest older 2-storey brick house
-- lower mass than the later modern building
-- simple pitched roof
+- lower mass than the later building
+- simple roof
 - plain ground floor
-- one small-paned window
-- one door
+- small-paned window and door
 - exactly one warm illuminated ground-floor window in the full frame
-- no signage, branding, shopfront identity, readable text, or modern details
+- no signage, branding, shopfront identity, readable text or modern details
 
-## TR06 — Right Neighbour Rules
+## RN01 rules
 Preserve:
-- lower height relative to TR05
+- small/lower mass relative to the plot
 - lighter facade character
-- visible door
-- overall parcel position
+- visible doorway role
+- overall position
 
-Allow period simplification of surface details.
-
-## Geometry Locks
+## Geometry locks
 ### LOCK_HARD
-Must not move unless historical evidence explicitly requires structural change:
-- camera transform
-- focal length
-- framing
-- horizon
-- parcel boundaries
-- main street axis
-- square geometry
+- master camera after solve
+- focal length after solve
+- framing and source resolution
+- horizon/roll
 - target-row baseline
-- roof-peak x positions where the building itself remains
-- TR05 parcel slot
-- TR06 position
+- visible frontage boundaries after overlay refinement
+- roof-peak x positions where retained
+- PLOT01 slot
+- RN01 position
+- square/street geometry
 
 ### LOCK_SOFT
-May change stylistically while keeping geometry:
 - window design
 - door design
 - facade material finish
 - roof covering
-- surface weathering
+- weathering
 
 ### EDITABLE
-May change by era:
 - signage
 - modern street furniture
 - canal/fill condition
@@ -105,29 +91,29 @@ May change by era:
 - horse/cart
 - planks/posts
 - mud/water
-- vegetation detail
+- vegetation detail where historically required
 
-## Anchor Points
-Use stable image-space anchors:
+## Image-space anchors
+First-pass targets:
+- `A01_ROW_LEFT` = (52,1062)
+- `A02_LT05_ROOF` = (280,919)
+- `A03_PLOT_LEFT` = (312,1062)
+- `A04_PLOT_CENTER` = (355,1062)
+- `A05_PLOT_RIGHT` = (398,1062)
+- `A06_RN_CENTER` = (414,1062)
+- `A07_RN_ROOF` = (414,963)
+- `A08_ROW_RIGHT` = (429,1062)
 
-- `A01` — left start of target row
-- `A02` — first strong roof peak
-- `A03` — TR05 left boundary
-- `A04` — TR05 centre axis
-- `A05` — TR05 right boundary
-- `A06` — TR06 door centre
-- `A07` — TR06 roof peak
-- `A08` — right end of target row
-
-## Quality-Control Rule
-Every era frame must be compared against the master by overlay.
+## Quality-control rule
+Every era frame must be overlaid against the 941×1672 master.
 
 Check:
-- TR05 left/right boundaries
-- TR06 position
+- PLOT01 left/right slot
+- RN01 position
+- LT01..LT05 frontage rhythm
 - roof-peak rhythm
-- target-row baseline
+- target-row baseline (~y=1061/1062 in the master)
 - square/street edge
-- major tree base positions where retained
+- major retained tree bases
 
-If one building is wrong after the camera is solved, adjust that building's geometry rather than changing the master camera.
+Once the camera is solved, fix a local mismatch by editing local geometry rather than moving the master camera.
