@@ -29,7 +29,7 @@ The generated geometry is a **camera-match scaffold**, not a finished reconstruc
 2. Match roll/horizon first.
 3. Match pitch.
 4. Adjust lens and camera distance together.
-5. Align the target-row baseline to roughly y=1061/1062 in the 941×1672 frame.
+5. Align the target-row baseline to y=1082 (measured shop-window sill) in the 941×1672 frame.
 6. Fit `LT01..LT05` visible frontage boundaries.
 7. Fit `PLOT01` to approx x=312..398.
 8. Fit `RN01` to approx x=398..429.

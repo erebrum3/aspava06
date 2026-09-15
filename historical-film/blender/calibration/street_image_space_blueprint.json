@@ -16,20 +16,21 @@
   "status": "FIRST_PASS_IMAGE_SPACE_SCAFFOLD",
   "precision_note": "Coordinates are intended for exact single-view alignment of the generated master frame. Occluded facade edges and the street-surface polygon are first-pass estimates and must be refined by overlay before final historical rendering.",
   "buildings": [
-    {"id":"LT01","xL":52,"xR":102,"roof_peak":[79,105],"eave_y":149,"base_y":242,"silhouette_polygon":[[52,242],[52,149],[79,105],[102,149],[102,242]]},
-    {"id":"LT02","xL":102,"xR":151,"roof_peak":[126,102],"eave_y":146,"base_y":242,"silhouette_polygon":[[102,242],[102,146],[126,102],[151,146],[151,242]]},
-    {"id":"LT03","xL":151,"xR":201,"roof_peak":[176,102],"eave_y":146,"base_y":242,"silhouette_polygon":[[151,242],[151,146],[176,102],[201,146],[201,242]]},
-    {"id":"LT04","xL":201,"xR":250,"roof_peak":[226,100],"eave_y":147,"base_y":242,"silhouette_polygon":[[201,242],[201,147],[226,100],[250,147],[250,242]]},
-    {"id":"LT05","xL":250,"xR":312,"roof_peak":[280,99],"eave_y":150,"base_y":242,"silhouette_polygon":[[250,242],[250,150],[280,99],[312,150],[312,242]]},
-    {"id":"PLOT01","xL":312,"xR":398,"roof_peak":[354,126],"eave_y":164,"base_y":242,"silhouette_polygon":[[312,242],[312,164],[354,126],[398,164],[398,242]]},
-    {"id":"RN01","xL":398,"xR":429,"roof_peak":[414,143],"eave_y":174,"base_y":242,"silhouette_polygon":[[398,242],[398,174],[414,143],[429,174],[429,242]]}
+    {"id":"LT01","xL":52,"xR":102,"roof_peak":[79,105],"eave_y":149,"base_y":262,"silhouette_polygon":[[52,262],[52,149],[79,105],[102,149],[102,262]]},
+    {"id":"LT02","xL":102,"xR":151,"roof_peak":[126,102],"eave_y":146,"base_y":262,"silhouette_polygon":[[102,262],[102,146],[126,102],[151,146],[151,262]]},
+    {"id":"LT03","xL":151,"xR":201,"roof_peak":[176,102],"eave_y":146,"base_y":262,"silhouette_polygon":[[151,262],[151,146],[176,102],[201,146],[201,262]]},
+    {"id":"LT04","xL":201,"xR":250,"roof_peak":[226,100],"eave_y":147,"base_y":262,"silhouette_polygon":[[201,262],[201,147],[226,100],[250,147],[250,262]]},
+    {"id":"LT05","xL":250,"xR":312,"roof_peak":[280,99],"eave_y":150,"base_y":262,"silhouette_polygon":[[250,262],[250,150],[280,99],[312,150],[312,262]]},
+    {"id":"PLOT01","xL":312,"xR":398,"roof_peak":[354,126],"eave_y":164,"base_y":262,"silhouette_polygon":[[312,262],[312,164],[354,126],[398,164],[398,262]]},
+    {"id":"RN01","xL":398,"xR":429,"roof_peak":[414,143],"eave_y":174,"base_y":262,"silhouette_polygon":[[398,262],[398,174],[414,143],[429,174],[429,262]]}
   ],
+  "corrections": ["2026-09-15: row base 242 -> 262 (full frame 1062 -> 1082); street polygon top edge moved below the shop-window sill."],
   "anchors": {
-    "ROW_BASE_LEFT": [48,242],
-    "ROW_BASE_RIGHT": [429,242],
-    "PLOT_LEFT_BASE": [312,242],
+    "ROW_BASE_LEFT": [48,262],
+    "ROW_BASE_RIGHT": [429,262],
+    "PLOT_LEFT_BASE": [312,262],
     "PLOT_CENTER_PEAK": [354,126],
-    "PLOT_RIGHT_BASE": [398,242],
+    "PLOT_RIGHT_BASE": [398,262],
     "RN_PEAK": [414,143],
     "SQUARE_NEAR_CENTER": [470,285]
   },
@@ -39,7 +40,7 @@
       "rule": "Only the plot building may change inside this silhouette. Keep its parcel edges fixed."
     },
     "STREET_SURFACE_PRIMARY": {
-      "polygon": [[228,238],[441,238],[553,257],[652,286],[621,340],[238,340],[191,304]],
+      "polygon": [[228,263],[441,263],[553,266],[652,286],[621,340],[238,340],[191,304]],
       "rule": "Primary street/square surface edit region. Intended for canal/quay/fill transformation while preserving surrounding buildings and foreground roofs."
     }
   },

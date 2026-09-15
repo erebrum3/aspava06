@@ -1,5 +1,13 @@
 # Blender Camera-Lock Workflow
 
+> **CANONICAL CAMERA ALREADY EXISTS — do not re-solve.** (added 2026-09-15)
+> Source of truth: `erebrum-system/sites/aspava/video-tests/2026-07-24/master-85m-78deg/geometri-gercegi/kamera-KANONIK.json`
+> (from the `.esp` export; ground truth §7 rule "Kamerayı yeniden fit etme").
+> RD/EPSG:28992 `87444.969, 436872.101` · altitude **85 m** · heading **282°** · tilt **78°** · vertical FOV **35°** · roll 0 · **941×1672** · horizon y=272.4.
+> Projection check 2026-09-15 with `render_geo.Cam`: church spire top 1 px, ASPAVA roof 5.8 px.
+> Build `Camera_Master` from these values. The overlay procedure below is a **validation** step (check proxies against the master), not a solve. The "50–85 mm, start near 65 mm" range below is superseded.
+
+
 ## Goal
 Match the reference frame closely enough that all later historical versions inherit the same spatial structure.
 

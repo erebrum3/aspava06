@@ -3,20 +3,24 @@
   "coordinate_origin": "top-left",
   "status": "FIRST_PASS_MANUAL_IMAGE_SPACE_CALIBRATION",
   "note": "Approximate where trees/occlusion hide facade or parcel edges. Use these as camera-match targets and refine by overlay; do not treat hidden boundaries as surveyed geometry.",
-  "aoi": {"xL": 45, "yT": 905, "xR": 435, "yB": 1072},
+  "aoi": {"xL": 45, "yT": 905, "xR": 435, "yB": 1090},
   "segments": [
-    {"id": "LT01", "xL": 52, "xR": 102, "roof_peak": [79, 925], "base_y": 1062},
-    {"id": "LT02", "xL": 102, "xR": 151, "roof_peak": [126, 922], "base_y": 1062},
-    {"id": "LT03", "xL": 151, "xR": 201, "roof_peak": [176, 922], "base_y": 1062},
-    {"id": "LT04", "xL": 201, "xR": 250, "roof_peak": [226, 920], "base_y": 1062},
-    {"id": "LT05", "xL": 250, "xR": 312, "roof_peak": [280, 919], "base_y": 1062},
-    {"id": "PLOT01", "xL": 312, "xR": 398, "roof_peak": [354, 946], "base_y": 1062},
-    {"id": "RN01", "xL": 398, "xR": 429, "roof_peak": [414, 963], "base_y": 1062}
+    {"id": "LT01", "xL": 52, "xR": 102, "roof_peak": [79, 925], "base_y": 1082, "roof_peak_kind": "rear_ridge"},
+    {"id": "LT02", "xL": 102, "xR": 151, "roof_peak": [126, 922], "base_y": 1082, "roof_peak_kind": "rear_ridge"},
+    {"id": "LT03", "xL": 151, "xR": 201, "roof_peak": [176, 922], "base_y": 1082, "roof_peak_kind": "rear_ridge"},
+    {"id": "LT04", "xL": 201, "xR": 250, "roof_peak": [226, 920], "base_y": 1082, "roof_peak_kind": "rear_ridge"},
+    {"id": "LT05", "xL": 250, "xR": 312, "roof_peak": [280, 919], "base_y": 1082, "roof_peak_kind": "rear_ridge"},
+    {"id": "PLOT01", "xL": 312, "xR": 398, "roof_peak": [354, 946], "base_y": 1082, "roof_peak_kind": "rear_ridge"},
+    {"id": "RN01", "xL": 398, "xR": 429, "roof_peak": [414, 963], "base_y": 1082, "roof_peak_kind": "rear_ridge"}
   ],
   "street": {
-    "target_row_baseline": [[48, 1061], [425, 1061]],
+    "target_row_baseline": [[48, 1082], [425, 1082]],
     "approx_open_area": [[290, 1065], [650, 1065], [645, 1165], [250, 1165]]
   },
+  "light_anchor": {"xy": [362, 1062], "desc": "PLOT01 ground-floor shop window centre = match-cut target; the older (362,1030) is a middle-floor window"},
+  "front_gable_peak_y_LT_approx": 975,
+  "canonical_camera": {"file": "erebrum-system: sites/aspava/video-tests/2026-07-24/master-85m-78deg/geometri-gercegi/kamera-KANONIK.json", "rd": [87444.969, 436872.101], "alt_m": 85, "heading_deg": 282, "tilt_deg": 78, "vfov_deg": 35, "rule": "do not refit; 2026-09-15 check: church spire 1 px, ASPAVA roof 5.8 px"},
+  "corrections": ["2026-09-15 Claude Code: base_y 1062 -> 1082. Measured on master fb072e98: shop-window sill = sharp luminance drop at row 1082 (23), plaza below (58-97). 1062 cut through the middle of the shop window."],
   "id_policy": {
     "LT": "left terrace unit",
     "PLOT01": "Aspava plot slot",

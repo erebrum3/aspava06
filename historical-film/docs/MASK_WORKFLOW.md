@@ -1,5 +1,7 @@
 # Exact-source restoration mask workflow
 
+> **Scope (added 2026-09-15):** per the project decisions (09-11 §11, 09-15 K2/K8) there is **no 1891–93 aerial frame**; aerial era frames keep all buildings. The 1891–93 pass and these masks apply to the **street-level close-up master frame** (close-up series 1891–93 → 1907 → 1975). In the close-up chain PLOT01 shows the older house in 1891–93 and the 1906 building from 1907 on.
+
 Goal: keep the supplied master street geometry visually identical outside explicitly editable historical regions.
 
 ## Core rule

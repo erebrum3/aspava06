@@ -23,17 +23,17 @@ MASTER_PLOT_CENTER_PX = 355.0
 # First-pass calibration extracted from the supplied master frame.
 # IDs intentionally describe role rather than assuming historical parcel identity.
 BUILDINGS = [
-    {"id": "LT01",   "xL": 52,  "xR": 102, "peak": (79, 925),  "base_y": 1062, "h": 6.2, "roof": 2.0, "lock": "HARD"},
-    {"id": "LT02",   "xL": 102, "xR": 151, "peak": (126, 922), "base_y": 1062, "h": 6.2, "roof": 2.1, "lock": "HARD"},
-    {"id": "LT03",   "xL": 151, "xR": 201, "peak": (176, 922), "base_y": 1062, "h": 6.2, "roof": 2.1, "lock": "HARD"},
-    {"id": "LT04",   "xL": 201, "xR": 250, "peak": (226, 920), "base_y": 1062, "h": 6.2, "roof": 2.1, "lock": "HARD"},
-    {"id": "LT05",   "xL": 250, "xR": 312, "peak": (280, 919), "base_y": 1062, "h": 6.4, "roof": 2.2, "lock": "HARD"},
-    {"id": "PLOT01", "xL": 312, "xR": 398, "peak": (354, 946), "base_y": 1062, "h": 7.0, "roof": 2.0, "lock": "FOOTPRINT"},
-    {"id": "RN01",   "xL": 398, "xR": 429, "peak": (414, 963), "base_y": 1062, "h": 5.3, "roof": 1.5, "lock": "HARD"},
+    {"id": "LT01",   "xL": 52,  "xR": 102, "peak": (79, 925),  "base_y": 1082, "h": 6.2, "roof": 2.0, "lock": "HARD"},
+    {"id": "LT02",   "xL": 102, "xR": 151, "peak": (126, 922), "base_y": 1082, "h": 6.2, "roof": 2.1, "lock": "HARD"},
+    {"id": "LT03",   "xL": 151, "xR": 201, "peak": (176, 922), "base_y": 1082, "h": 6.2, "roof": 2.1, "lock": "HARD"},
+    {"id": "LT04",   "xL": 201, "xR": 250, "peak": (226, 920), "base_y": 1082, "h": 6.2, "roof": 2.1, "lock": "HARD"},
+    {"id": "LT05",   "xL": 250, "xR": 312, "peak": (280, 919), "base_y": 1082, "h": 6.4, "roof": 2.2, "lock": "HARD"},
+    {"id": "PLOT01", "xL": 312, "xR": 398, "peak": (354, 946), "base_y": 1082, "h": 7.0, "roof": 2.0, "lock": "FOOTPRINT"},
+    {"id": "RN01",   "xL": 398, "xR": 429, "peak": (414, 963), "base_y": 1082, "h": 5.3, "roof": 1.5, "lock": "HARD"},
 ]
 
 AOI_PX = (45, 905, 435, 1072)
-ROW_BASELINE_PX = ((48, 1061), (425, 1061))
+ROW_BASELINE_PX = ((48, 1082), (425, 1082))
 
 
 def px_center_to_world_x(xL, xR):
@@ -198,14 +198,14 @@ def setup_scene():
     plot_slot["rule"] = "Era-specific PLOT01 replacements must remain inside this slot."
 
     anchor_specs = {
-        "A01_ROW_LEFT": (52, 1062),
+        "A01_ROW_LEFT": (52, 1082),
         "A02_LT05_ROOF": (280, 919),
-        "A03_PLOT_LEFT": (312, 1062),
-        "A04_PLOT_CENTER": (355, 1062),
-        "A05_PLOT_RIGHT": (398, 1062),
-        "A06_RN_CENTER": (414, 1062),
+        "A03_PLOT_LEFT": (312, 1082),
+        "A04_PLOT_CENTER": (355, 1082),
+        "A05_PLOT_RIGHT": (398, 1082),
+        "A06_RN_CENTER": (414, 1082),
         "A07_RN_ROOF": (414, 963),
-        "A08_ROW_RIGHT": (429, 1062),
+        "A08_ROW_RIGHT": (429, 1082),
     }
     for name, (px, py) in anchor_specs.items():
         x = (px - MASTER_PLOT_CENTER_PX) * PIXEL_TO_PROXY_X

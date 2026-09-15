@@ -95,14 +95,14 @@ Preserve:
 
 ## Image-space anchors
 First-pass targets:
-- `A01_ROW_LEFT` = (52,1062)
+- `A01_ROW_LEFT` = (52,1082)
 - `A02_LT05_ROOF` = (280,919)
-- `A03_PLOT_LEFT` = (312,1062)
-- `A04_PLOT_CENTER` = (355,1062)
-- `A05_PLOT_RIGHT` = (398,1062)
-- `A06_RN_CENTER` = (414,1062)
+- `A03_PLOT_LEFT` = (312,1082)
+- `A04_PLOT_CENTER` = (355,1082)
+- `A05_PLOT_RIGHT` = (398,1082)
+- `A06_RN_CENTER` = (414,1082)
 - `A07_RN_ROOF` = (414,963)
-- `A08_ROW_RIGHT` = (429,1062)
+- `A08_ROW_RIGHT` = (429,1082)
 
 ## Quality-control rule
 Every era frame must be overlaid against the 941×1672 master.
@@ -112,7 +112,7 @@ Check:
 - RN01 position
 - LT01..LT05 frontage rhythm
 - roof-peak rhythm
-- target-row baseline (~y=1061/1062 in the master)
+- target-row baseline (y=1082 in the master)
 - square/street edge
 - major retained tree bases
 
