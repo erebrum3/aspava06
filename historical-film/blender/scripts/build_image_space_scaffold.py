@@ -1,21 +1,8 @@
-"""Build a camera-locked image-space scaffold for the Schiedam target row.
+"""Build the single-view image-space target scaffold.
 
-Purpose
--------
-This script does NOT reconstruct true-world geometry. It creates silhouette planes
-that project to the calibrated pixel coordinates of the supplied master frame.
-Use these planes as a visual target while fitting the real 3D proxy geometry.
-
-Workflow
---------
-1. Run bootstrap_master_scene.py first.
-2. Run this script.
-3. Enter Camera View.
-4. Fit the real proxy buildings to the generated image-space silhouettes.
-5. Once the proxies match, hide this scaffold and continue with the neutral master.
-
-The scaffold is deliberately single-view. That is useful here because the film's
-historical frames must preserve one fixed master camera.
+Run bootstrap_master_scene.py first. This uses Camera_Validation_Local, which is
+only a local projection helper. It must not be confused with or exported as the
+canonical geographic camera owned by erebrum-system.
 """
 
 import bpy
@@ -23,15 +10,10 @@ import json
 from mathutils import Vector
 from pathlib import Path
 
-ROOT_NAME = "HISTORICAL_FILM_MASTER"
-CAMERA_NAME = "Camera_Master"
+ROOT_NAME = "HISTORICAL_FILM_VALIDATION_LOCAL"
+CAMERA_NAME = "Camera_Validation_Local"
 SCAFFOLD_COLLECTION = "06_IMAGE_SPACE_SCAFFOLD"
-
-# If running from Blender's Text Editor, set this path manually if needed.
 CALIBRATION_PATH = "//historical-film/blender/calibration/street_image_space_blueprint.json"
-
-# Distance of the 2.5D silhouette plane from the camera. Its exact value is not
-# important for image alignment as long as all points use the same camera model.
 DEPTH_METERS = 30.0
 
 
@@ -54,32 +36,17 @@ def ensure_collection(name, parent):
     return col
 
 
-def resolve_calibration_path():
-    p = bpy.path.abspath(CALIBRATION_PATH)
-    return Path(p)
-
-
 def pixel_to_camera_local(u, v, camera, render_w, render_h, depth):
-    """Convert top-left-origin render pixels to camera-local XYZ at fixed depth.
-
-    Camera is forced to HORIZONTAL sensor fit so the math stays deterministic.
-    """
     lens = camera.data.lens
-    sensor_w = camera.data.sensor_width
-    sensor_h = sensor_w * (render_h / render_w)
-
+    sensor_h = camera.data.sensor_height
+    sensor_w = sensor_h * (render_w / render_h)
     sx = ((u / render_w) - 0.5) * sensor_w
     sy = (0.5 - (v / render_h)) * sensor_h
-
-    x = (sx / lens) * depth
-    y = (sy / lens) * depth
-    z = -depth
-    return Vector((x, y, z))
+    return Vector(((sx / lens) * depth, (sy / lens) * depth, -depth))
 
 
 def pixel_to_world(u, v, camera, render_w, render_h, depth):
-    local = pixel_to_camera_local(u, v, camera, render_w, render_h, depth)
-    return camera.matrix_world @ local
+    return camera.matrix_world @ pixel_to_camera_local(u, v, camera, render_w, render_h, depth)
 
 
 def make_polygon_object(name, pixel_polygon, camera, render_w, render_h, depth, collection):
@@ -87,7 +54,6 @@ def make_polygon_object(name, pixel_polygon, camera, render_w, render_h, depth, 
     mesh = bpy.data.meshes.new(f"{name}_MESH")
     mesh.from_pydata([tuple(v) for v in verts], [], [tuple(range(len(verts)))])
     mesh.update()
-
     obj = bpy.data.objects.new(name, mesh)
     collection.objects.link(obj)
     obj.display_type = 'WIRE'
@@ -111,18 +77,13 @@ def main():
     scene = bpy.context.scene
     root = bpy.data.collections.get(ROOT_NAME)
     if root is None:
-        raise RuntimeError("Run bootstrap_master_scene.py first; HISTORICAL_FILM_MASTER is missing.")
+        raise RuntimeError("Run bootstrap_master_scene.py first; local validation root is missing.")
 
     camera = bpy.data.objects.get(CAMERA_NAME)
     if camera is None or camera.type != 'CAMERA':
-        raise RuntimeError("Camera_Master not found.")
+        raise RuntimeError("Camera_Validation_Local not found.")
 
-    # Keep projection deterministic for pixel-to-ray conversion.
-    camera.data.sensor_fit = 'HORIZONTAL'
-    camera.data.shift_x = 0.0
-    camera.data.shift_y = 0.0
-
-    path = resolve_calibration_path()
+    path = Path(bpy.path.abspath(CALIBRATION_PATH))
     if not path.exists():
         raise RuntimeError(f"Calibration JSON not found: {path}")
 
@@ -143,39 +104,24 @@ def main():
 
     for b in data['buildings']:
         full_poly = [[p[0] + offset_x, p[1] + offset_y] for p in b['silhouette_polygon']]
-        obj = make_polygon_object(
-            f"IMG_{b['id']}_SILHOUETTE",
-            full_poly,
-            camera,
-            full_w,
-            full_h,
-            DEPTH_METERS,
-            col,
-        )
+        obj = make_polygon_object(f"IMG_{b['id']}_SILHOUETTE", full_poly, camera, full_w, full_h, DEPTH_METERS, col)
         obj['building_id'] = b['id']
-        obj['source'] = 'street_image_space_blueprint.json'
         obj['target_xL_px'] = b['xL'] + offset_x
         obj['target_xR_px'] = b['xR'] + offset_x
         obj['target_base_y_px'] = b['base_y'] + offset_y
         obj['target_roof_peak_x_px'] = b['roof_peak'][0] + offset_x
         obj['target_roof_peak_y_px'] = b['roof_peak'][1] + offset_y
-        obj['status'] = 'IMAGE_SPACE_TARGET_DO_NOT_MODEL_FROM_THIS'
+        obj['status'] = 'IMAGE_SPACE_TARGET_ONLY'
 
     for name, crop_xy in data.get('anchors', {}).items():
         full_xy = [crop_xy[0] + offset_x, crop_xy[1] + offset_y]
-        anchor = make_anchor(
-            f"IMG_ANCHOR_{name}", full_xy, camera, full_w, full_h, DEPTH_METERS, col
-        )
+        anchor = make_anchor(f"IMG_ANCHOR_{name}", full_xy, camera, full_w, full_h, DEPTH_METERS, col)
         anchor['target_x_px'] = full_xy[0]
         anchor['target_y_px'] = full_xy[1]
-        anchor['lock'] = 'IMAGE_SPACE_HARD_TARGET'
 
-    col['purpose'] = 'Exact single-view pixel target for camera-match and proxy fitting.'
+    col['purpose'] = 'Single-view pixel QA only; not geographic camera truth.'
     col['depth_m'] = DEPTH_METERS
-    col['do_not_use_as_historical_truth'] = True
-
-    print("Image-space scaffold created.")
-    print("Fit 3D proxies to IMG_* silhouettes in Camera View, then hide this collection.")
+    print("Image-space scaffold created for Camera_Validation_Local.")
 
 
 if __name__ == '__main__':
